@@ -1,30 +1,32 @@
 <template>
-  <div id="nav">
-    <router-link to="/">Home</router-link> |
+  <div id="nav" style="position: fixed; bottom: 0">
+    <router-link to="/">Start</router-link> | 
+    <router-link to="/game">Game</router-link> | 
     <router-link to="/about">About</router-link>
   </div>
-  <router-view/>
+  <router-view v-slot="{ Component }">
+    <transition name="fade">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </transition>
+  </router-view>
 </template>
 
+<script>
+export default {};
+</script>
+
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+.fade-enter-active {
+  transition: opacity 0.3s ease;
+  position: absolute;
 }
-
-#nav {
-  padding: 30px;
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

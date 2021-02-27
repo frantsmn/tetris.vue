@@ -4,4 +4,6 @@ import router from './router'
 import store from './store'
 import './registerServiceWorker'
 
+import './assets/scss/index.scss'
+
 createApp(App).use(store).use(router).mount('#app')
