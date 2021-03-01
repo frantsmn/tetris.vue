@@ -1,8 +1,12 @@
 export default class Sound {
-    constructor() {
+    constructor(EMITTER) {
 
-        //Cписок ресурсов
         this.resources = ['land', 'move', 'rotate', 'clearline', 'tetris', 'gameover', 'levelup', 'pause', 'option'];
+
+        for (let i = 0; i < this.resources.length; i++) {
+            this[this.resources[i]] = new Audio();
+            this[this.resources[i]].src = `./assets/game/sound/${this.resources[i]}.mp3`;
+        }
 
         this.play = (name) => {
             if (localStorage['SOUND'] === 'true') {
@@ -10,12 +14,6 @@ export default class Sound {
                 this[name].play();
             }
         }
-
-        //Предзагрузка звуков
-        this.preloadSounds(this.resources, () => {
-            console.log('All sounds has been preloaded!');
-        });
-
 
         EMITTER.subscribe('control:pausePressed', () => {
             this.play('pause');
@@ -64,24 +62,5 @@ export default class Sound {
         EMITTER.subscribe('block:moveRight', () => {
             this.play('move');
         });
-    }
-
-    preloadSounds(sources, callback) {
-        let counter = 0;
-
-        function onLoad() {
-            counter++;
-            if (counter === sources.length) {
-                callback();
-            }
-        }
-
-        for (let i = 0; i < sources.length; i++) {
-            this[sources[i]] = new Audio();
-            this[sources[i]].src = `./assets/game/sound/${sources[i]}.mp3`;
-            this[sources[i]].onload = this[sources[i]].onerror = onLoad;
-        }
-
-        return callback();
     }
 }

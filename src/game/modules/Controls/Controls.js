@@ -3,7 +3,8 @@ import Touch from './Touch.js';
 import Gamepad from './Gamepad.js';
 
 export default class Control {
-	constructor(block) {
+	constructor(EMITTER, block) {
+		this.EMITTER;
 
 		let shiftRepeatTimeoutID = 0;		// ID таймаута повтора движения блока влево/вправо, при зажатой кнопке
 		let downRepeatTimeoutID = 0;		// ID таймаута повтора движения блока вниз, при зажатой кнопке
@@ -17,27 +18,27 @@ export default class Control {
 				clearTimeout(shiftRepeatTimeoutID);
 				clearTimeout(downRepeatTimeoutID);
 			},
-			'A': () => block.activeBlock.rotateLeft(),
-			'B': () => block.activeBlock.rotateRight(),
+			'A': () => block.currentBlock.rotateLeft(),
+			'B': () => block.currentBlock.rotateRight(),
 			'Left': () => {
 				clearTimeout(shiftRepeatTimeoutID);								// Обнулить повторы нажатия (устранение конфликта при одновременном нажатии 'left' и 'right')
-				block.activeBlock.moveLeft();
+				block.currentBlock.moveLeft();
 				shiftRepeatTimeoutID = setTimeout(function tick() {
-					block.activeBlock.moveLeft();
+					block.currentBlock.moveLeft();
 					shiftRepeatTimeoutID = setTimeout(tick, 100);		// Рекурсивно вызывать таймаут
 				}, 260);
 			},
 			'Right': () => {
 				clearTimeout(shiftRepeatTimeoutID);								// Обнулить повторы нажатия (устранение конфликта при одновременном нажатии 'left' и 'right')
-				block.activeBlock.moveRight();
+				block.currentBlock.moveRight();
 				shiftRepeatTimeoutID = setTimeout(function tick() {
-					block.activeBlock.moveRight();
+					block.currentBlock.moveRight();
 					shiftRepeatTimeoutID = setTimeout(tick, 100);		// Рекурсивно вызывать таймаут
 				}, 260);
 			},
 			'Down': () => {
 				downRepeatTimeoutID = setTimeout(function tick() {
-					block.activeBlock.moveDown();
+					block.currentBlock.moveDown();
 					EMITTER.emit('control:downPressed', true);			// Сообщить о нажатой клавише 'down' (необходимо для подсчета строк, которые пролетит блок)
 					downRepeatTimeoutID = setTimeout(tick, 37);			// Рекурсивно вызывать таймаут
 				}, 0);
@@ -107,10 +108,10 @@ export default class Control {
 		this._isPaused = state;
 		if (this._isPaused) {
 			this.isAvailable = false;
-			EMITTER.emit('control:pausePressed');
+			this.EMITTER.emit('control:pausePressed');
 		} else {
 			this.isAvailable = true;
-			EMITTER.emit('control:pauseReleased');
+			this.EMITTER.emit('control:pauseReleased');
 		}
 	}
 

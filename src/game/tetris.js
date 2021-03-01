@@ -1,73 +1,77 @@
-// Matrix   (М)
-// Block    (M)
-// Ticker   (M)
-
-// Sound    (V)
-// Textures (V)
-// Canvas   (V)
-// Stats    (V)
-
-// Overlay  (V/С)
-
-// Control  (C)
-
 import EventEmitter from './modules/Emitter'
 
-import Block from './modules/Block.js';
-import Canvas from './modules/Canvas.js';
-import Controls from './modules/Controls/Controls.js';
-import Matrix from './modules/Matrix.js';
-import Sound from './modules/Sound.js';
-import Stats from './modules/Stats.js';
-import Textures from './modules/Textures.js';
-import Ticker from './modules/Ticker.js';
-import UI from './modules/UI.js';
-import Settings from './modules/Settings.js';
+import Textures from './modules/Textures'
+import Sound from './modules/Sound'
+
+import Block from './modules/Block'
+import Canvas from './modules/Canvas'
+
+import Controls from './modules/Controls/Controls'
+import Matrix from './modules/Matrix'
+import Stats from './modules/Stats'
+
+import Ticker from './modules/Ticker'
+import UI from './modules/UI'
+import Settings from './modules/Settings'
 
 //=======================================================
 // const matrixState = '[[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[{"state":"fixed","color":2},{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},null],[{"state":"fixed","color":2},{"state":"fixed","color":2},{"state":"fixed","color":2},null,{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3}]]';
-const EMITTER = window.EMITTER = new EventEmitter();
 
-export default class Game {
-    constructor({ canvasElement, statsElement }) {
-        const textures = new Textures();
+export default class Tetris {
+    constructor({ canvasElement, $store }) {
+        const EMITTER = new EventEmitter();
+
+        const textures = new Textures(EMITTER);
+        new Sound(EMITTER);
+
         const ticker = new Ticker();
         const matrix = new Matrix();
-        const canvas = new Canvas(canvasElement, textures);
-        const stats = new Stats(statsElement);
-        const block = new Block(matrix, canvas, stats); //Принимает Matrix, Canvas, Stats, и queue (последовательность блоков) arr[1..7*1000]
-        const controls = new Controls(block);
+        const canvas = new Canvas(EMITTER, canvasElement, textures);
+        const stats = new Stats(EMITTER);
+        const block = new Block(EMITTER, matrix, canvas);
+        const controls = new Controls(EMITTER, block);
 
         new Settings();
-        new Sound();
         new UI(stats, EMITTER);
 
         const LEVEL_DELAYS = [800, 717, 633, 550, 467, 383, 300, 217, 133, 100, 83, 83, 83, 67, 67, 67, 50, 50, 50, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 17];
 
-        EMITTER.subscribe('stats:newLevel', (level) => ticker.start(LEVEL_DELAYS[level]));
+        EMITTER.subscribe('stats:newLevel', (level) => {
+            ticker.start(LEVEL_DELAYS[level]);
+            $store.commit('game/setLevel', level)                                   //? [VUEX] Обновить уровень (определяет цвет блоков)
+        });
+        EMITTER.subscribe('stats:refresh', ({ score, lines }) => {
+            $store.commit('game/stats/setScore', score)                             //? [VUEX] Обновить уровень (определяет цвет блоков)
+            $store.commit('game/stats/setLines', lines)                             //? [VUEX] Обновить уровень (определяет цвет блоков)
+        });
+
+        EMITTER.subscribe('block:blockAppeared', () => {
+            $store.commit('game/stats/countBlock', block.currentBlock.name);        //? [VUEX] Подсчет появившихся блоков
+            $store.commit('game/stats/setNextBlock', block.nextBlock.name);         //? [VUEX] Установить след. блок
+        });
         EMITTER.subscribe('block:gameOver', () => ticker.stop());
         EMITTER.subscribe('block:blockFixed', () => ticker.sleep(60));
+
         EMITTER.subscribe('canvas:wipeAnimationStart', () => ticker.sleep(360));
+
         EMITTER.subscribe('control:pausePressed', () => ticker.stop());
         EMITTER.subscribe('control:pauseReleased', () => ticker.start());
 
-        this.startGame = () => {
-            //Определяем цвет у текстур
-            textures.level = 0;
+        this.startGame = ({ level }) => {
+            // Определить цвет текстур
+            textures.level = level;
 
+            stats.init();
             matrix.clearMatrix();
             canvas.drawState(matrix.getFixedMatrix());
-            stats.init();
 
-            block.createNewQueue();
-            block.activeBlock.drawBlock();
-
-            controls.isAvailable = true;
-
-            // Оживляем по тикеру
-            ticker.onTick = () => block.activeBlock.moveDown();
-            ticker.start(LEVEL_DELAYS[0]);
-            ticker.sleep(400);
+            block.setNewQueue()
+                .then(() => {
+                    block.currentBlock.drawBlock();
+                    ticker.onTick = () => block.currentBlock.moveDown();
+                    ticker.start(LEVEL_DELAYS[level]);
+                    ticker.sleep(1000).then(() => controls.isAvailable = true)
+                });
         }
 
         this.saveGame = () => {
@@ -107,9 +111,9 @@ export default class Game {
 
             //Восстановление последовательности блоков
             if (state.block.activeBlockId - 1 > 0) {
-                block.setQueue(state.block.queue, --state.block.activeBlockId);
+                block.loadQueue(state.block.queue, --state.block.activeBlockId);
             } else {
-                block.setQueue(state.block.queue, state.block.activeBlockId);
+                block.loadQueue(state.block.queue, state.block.activeBlockId);
             }
             block.activeBlock.drawBlock();
 
@@ -121,5 +125,6 @@ export default class Game {
             ticker.start(LEVEL_DELAYS[state.stats.level]);
             ticker.sleep(800);
         }
+
     }
 }

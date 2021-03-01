@@ -57,11 +57,14 @@ export default class Ticker {
 	}
 
 	sleep(ms) {
-		clearTimeout(this.sleepTimeout);
-		this.stop();
-		this.sleepTimeout = setTimeout(() => {
-			this.start();
-		}, ms);
+		return new Promise(resolve => {
+			clearTimeout(this.sleepTimeout);
+			this.stop();
+			this.sleepTimeout = setTimeout(() => {
+				this.start();
+				resolve();
+			}, ms);
+		})
 	}
 
 }

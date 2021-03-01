@@ -1,7 +1,8 @@
 export default class Canvas {
-    constructor(element, textures) {
+    constructor(EMITTER, element, textures) {
         this.context = element.getContext('2d');
         this.textures = textures;
+        this.EMITTER = EMITTER;
     }
 
     drawState(matrix) {
@@ -43,7 +44,7 @@ export default class Canvas {
         let context = this.context;
 
         //Трансляция события начала анимации
-        EMITTER.emit('canvas:wipeAnimationStart');
+        this.EMITTER.emit('canvas:wipeAnimationStart');
 
         let i = 0;
         let interval = setInterval(() => {
@@ -54,11 +55,11 @@ export default class Canvas {
             i++;
             if (i > 5) {
                 clearInterval(interval);
-                
+
                 //Трансляция события окончания анимации
                 callback();
-                EMITTER.emit('canvas:wipeAnimationEnd');
-                return 
+                this.EMITTER.emit('canvas:wipeAnimationEnd');
+                return
             }
         }, 60);
 

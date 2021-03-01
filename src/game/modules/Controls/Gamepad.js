@@ -1,8 +1,12 @@
 import { GamepadListener } from 'gamepad.js';
 
 
+import store from '@/store/index.js'
+
 export default class Gamepad {
 	constructor() {
+
+
 
 		this.MAP = {
 			0: { button: 'A' },
@@ -28,7 +32,8 @@ export default class Gamepad {
 			 *       gamepad, // Native Gamepad object
 			 *   }
 			 */
-			console.log(`connected >>`, event);
+			console.log(`connected >>`, event.detail.gamepad);
+			store.commit('gamepads/addGamepad', event.detail.gamepad)
 		});
 
 		listener.on('gamepad:disconnected', function (event) {
@@ -40,6 +45,7 @@ export default class Gamepad {
 			 *   }
 			 */
 			console.log(`disconnected >>`, event);
+			store.commit('gamepads/removeGamepad', event.detail.index)
 		});
 
 

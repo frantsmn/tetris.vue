@@ -1,8 +1,6 @@
 export default class Block {
-    constructor(matrix, canvas, stats, queue) {
-
-        this.queue = queue ? queue : [...new Array(1000)].map(() => Math.floor(Math.random() * 7) + 1);
-        this.createRandomQueue = () => [...new Array(1000)].map(() => Math.floor(Math.random() * 7) + 1);
+    constructor(EMITTER, matrix, canvas) {
+        this.EMITTER = EMITTER;
 
         this.createBlock = {
             1: () => new I_block(),
@@ -14,60 +12,27 @@ export default class Block {
             7: () => new T_block(),
         };
 
-        this.activeBlockId = 0;
-        let activeBlock = this.activeBlock = this.createBlock[this.queue[this.activeBlockId]]();
-        let nextBlock = this.nextBlock = this.createBlock[this.queue[this.activeBlockId + 1]]();
-
-        //Обновить подсчет появившихся блоков в статистике
-        stats.refreshAppearedBlocks(activeBlock.name);
-        //Обновить в статистике следующий блок
-        stats.refreshNextBlock(nextBlock.name);
-
-        //Устанавливает заданную (сохраненую) очередь и позицию в ней
-        this.setQueue = (queue, i) => {
-            this.queue = queue;
-            this.activeBlockId = i;
-            activeBlock = this.activeBlock = this.createBlock[this.queue[this.activeBlockId]]();
-            nextBlock = this.nextBlock = this.createBlock[this.queue[this.activeBlockId + 1]]();
-            //Обновить подсчет появившихся блоков в статистике
-            //(не добавляя текущий, т.к. он был учтен) при сохранении
-            stats.refreshAppearedBlocks();
-            //Обновить в статистике картинку следующего блока
-            stats.refreshNextBlock(nextBlock.name);
+        const goToNextBlock = () => {
+            this.currentBlockId++;
+            this.currentBlock.drawBlock();
+            this.EMITTER.emit('block:blockAppeared');
         }
 
-        //Создает новую очередь для новой игры
-        this.createNewQueue = () => {
-            this.queue = this.createRandomQueue();
-            this.activeBlockId = 0;
-            activeBlock = this.activeBlock = this.createBlock[this.queue[this.activeBlockId]]();
-            nextBlock = this.nextBlock = this.createBlock[this.queue[this.activeBlockId + 1]]();
-            //Обновить подсчет появившихся блоков в статистике
-            stats.refreshAppearedBlocks(activeBlock.name);
-            //Обновить в статистике следующий блок
-            stats.refreshNextBlock(nextBlock.name);
-        };
-
-        let goToNextBlock = () => {
-            activeBlock = this.activeBlock = this.nextBlock;
-            nextBlock = this.nextBlock = this.createBlock[this.queue[++this.activeBlockId]]();
-
-            activeBlock.drawBlock();
-
-            //Обновить подсчет появившихся блоков в статистике
-            stats.refreshAppearedBlocks(activeBlock.name);
-            //Обновить в статистике следующий блок
-            stats.refreshNextBlock(nextBlock.name);
-        }
-
-        function BlockMovements() {
-            this.moveDown = function () {
-                // console.log(matrix.getMatrix());
+        function BlockMethods() {
+            this.drawBlock = () => {
+                console.log('DRAW BLOCK');
+                matrix.addPoints(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1], this.color);
+                canvas.drawState(matrix.getMatrix());
+            }
+            this.eraseBlock = () => {
+                matrix.removePoints(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1]);
+            }
+            this.moveDown = () => {
                 //Если следующая линия свободна
                 if (matrix.checkPointsIsEmpty(this.position.x, this.position.y + 1, this.pointsSet[this.rotation.state - 1])) {
-                    eraseBlock();
+                    this.eraseBlock();
                     this.position.y++;
-                    drawBlock();
+                    this.drawBlock();
                 } else if (this.position.y) { //Если следующая линия занята и он не на нулевой линии (this.position.y !== 0)
                     //Сообщить что блок упал
                     EMITTER.emit('block:blockFixed');
@@ -77,7 +42,8 @@ export default class Block {
                     //Если поcле падения есть заполненные линии
                     if (matrix.getFullLines().length) {
                         //Добавить линии в статистику
-                        stats.addLines(matrix.getFullLines().length);
+                        EMITTER.emit('block:wipeLines', matrix.getFullLines().length);
+                        // stats.addLines(matrix.getFullLines().length);
                         //Анимировать стирание линий: Canvas.wipeLinesAnimation(array[], callback());
                         canvas.wipeLinesAnimation(matrix.getFullLines(), () => {
                             matrix.removeFullLines();
@@ -88,66 +54,55 @@ export default class Block {
                         goToNextBlock();
                     }
                 } else {
-                    drawBlock();
+                    this.drawBlock();
                     //Сообщить о gameover
                     EMITTER.emit('block:gameOver');
                     //Воспроизвести анимацию gameOver
                     canvas.gameOverAnimation();
                 }
             }
-
-            this.moveLeft = function () {
+            this.moveLeft = () => {
                 if (matrix.checkPointsIsEmpty(this.position.x - 1, this.position.y, this.pointsSet[this.rotation.state - 1])) {
-                    eraseBlock();
+                    this.eraseBlock();
                     this.position.x--;
                     // console.timeEnd('gamepadDelay');
-                    drawBlock();
+                    this.drawBlock();
                     EMITTER.emit('block:moveLeft');
                 }
             };
-            this.moveRight = function () {
+            this.moveRight = () => {
                 if (matrix.checkPointsIsEmpty(this.position.x + 1, this.position.y, this.pointsSet[this.rotation.state - 1])) {
-                    eraseBlock();
+                    this.eraseBlock();
                     this.position.x++;
                     // console.timeEnd('gamepadDelay');
-                    drawBlock();
+                    this.drawBlock();
                     EMITTER.emit('block:moveRight');
                 }
             };
-            this.rotateRight = function () {
+            this.rotateRight = () => {
                 const newState = this.rotation.state === this.rotation.amount ? 1 : this.rotation.state + 1;
                 if (matrix.checkPointsIsEmpty(this.position.x, this.position.y, this.pointsSet[newState - 1])) {
-                    eraseBlock();
+                    this.eraseBlock();
                     this.rotation.state = newState;
                     // console.timeEnd('gamepadDelay');
-                    drawBlock();
+                    this.drawBlock();
                     EMITTER.emit('block:rotateRight');
                 }
             }
-            this.rotateLeft = function () {
+            this.rotateLeft = () => {
                 const newState = this.rotation.state === 1 ? this.rotation.amount : this.rotation.state - 1;
                 if (matrix.checkPointsIsEmpty(this.position.x, this.position.y, this.pointsSet[newState - 1])) {
-                    eraseBlock();
+                    this.eraseBlock();
                     this.rotation.state = newState;
                     // console.timeEnd('gamepadDelay');
-                    drawBlock();
+                    this.drawBlock();
                     EMITTER.emit('block:rotateLeft');
                 }
-            }
-            let drawBlock = this.drawBlock = () => {
-                matrix.addPoints(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1], this.color);
-                canvas.drawState(matrix.getMatrix());
-                // canvas.drawBlock(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1], this.color);
-            }
-            let eraseBlock = () => {
-                matrix.removePoints(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1]);
-                // canvas.drawState(matrix.getMatrix());
-                // canvas.eraseBlock(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1]);
             }
         }
 
         function I_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 'i-block';
             this.color = 1;
             this.position = {
@@ -189,7 +144,7 @@ export default class Block {
         }
 
         function J_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 'j-block';
             this.color = 2;
             this.position = {
@@ -257,7 +212,7 @@ export default class Block {
         }
 
         function L_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 'l-block';
             this.color = 3;
             this.position = {
@@ -325,7 +280,7 @@ export default class Block {
         }
 
         function O_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 'o-block';
             this.color = 1;
             this.position = {
@@ -354,7 +309,7 @@ export default class Block {
         }
 
         function S_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 's-block';
             this.color = 2;
             this.position = {
@@ -396,7 +351,7 @@ export default class Block {
         }
 
         function Z_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 'z-block';
             this.color = 3;
             this.position = {
@@ -438,7 +393,7 @@ export default class Block {
         }
 
         function T_block() {
-            BlockMovements.call(this);
+            BlockMethods.call(this);
             this.name = 't-block';
             this.color = 1;
             this.position = {
@@ -504,5 +459,61 @@ export default class Block {
                 }],
             ];
         }
+    }
+
+    // Устанавливает новую очередь
+    setNewQueue() {
+        return new Promise(resolve => {
+            this.queue = this.createRandomQueue();
+            this.currentBlockId = 0;
+            setTimeout(() => {
+                resolve();
+            }, 10);
+        });
+    }
+
+    // Загружает очередь и устанавливает позицию в ней
+    loadQueue(queue, i) {
+        return new Promise(resolve => {
+            this.queue = queue;
+            this.currentBlockId = i;
+            setTimeout(() => {
+                resolve();
+            }, 10);
+        });
+    }
+
+    // Создает массив с рандомными числами 
+    createRandomQueue() {
+        return [...new Array(1000)].map(() => Math.floor(Math.random() * 7) + 1);
+    }
+
+    // Устанавливает новую очередь
+    set queue(value) {
+        this.__queue = value;
+    }
+
+    get queue() {
+        return this.__queue;
+    }
+
+    // Устанавливает текущий блок + (устанавливает следующий блок)
+    set currentBlockId(value) {
+        this.__currentBlockId = value;
+        this.__currentBlock = this.createBlock[this.queue[value]]();
+        this.__nextBlock = this.createBlock[this.queue[value + 1]]();
+        this.EMITTER.emit('block:blockAppeared');
+    }
+
+    get currentBlockId() {
+        return this.__currentBlockId;
+    }
+
+    get currentBlock() {
+        return this.__currentBlock;
+    }
+
+    get nextBlock() {
+        return this.__nextBlock;
     }
 }
