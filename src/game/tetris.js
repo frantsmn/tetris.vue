@@ -3,38 +3,37 @@ import EventEmitter from './modules/Emitter'
 import Textures from './modules/Textures'
 import Sound from './modules/Sound'
 
-import Block from './modules/Block'
-import Canvas from './modules/Canvas'
-
-import Controls from './modules/Controls/Controls'
 import Matrix from './modules/Matrix'
+import Canvas from './modules/Canvas'
+import Block from './modules/Block'
+import Controls from './modules/controls/Controls'
 import Stats from './modules/Stats'
-
 import Ticker from './modules/Ticker'
-import UI from './modules/UI'
+
 import Settings from './modules/Settings'
 
 //=======================================================
 // const matrixState = '[[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[{"state":"fixed","color":2},{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},null],[{"state":"fixed","color":2},{"state":"fixed","color":2},{"state":"fixed","color":2},null,{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3}]]';
 
 export default class Tetris {
-    constructor({ canvasElement, $store }) {
+    constructor({ playerIndex, canvasElement, $store }) {
+        const LEVEL_DELAYS = [800, 717, 633, 550, 467, 383, 300, 217, 133, 100, 83, 83, 83, 67, 67, 67, 50, 50, 50, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 17];
+
+        this.playerIndex = playerIndex;
         const EMITTER = new EventEmitter();
 
         const textures = new Textures(EMITTER);
         new Sound(EMITTER);
 
-        const ticker = new Ticker();
         const matrix = new Matrix();
         const canvas = new Canvas(EMITTER, canvasElement, textures);
-        const stats = new Stats(EMITTER);
         const block = new Block(EMITTER, matrix, canvas);
         const controls = new Controls(EMITTER, block);
+        const stats = new Stats(EMITTER);
+        const ticker = new Ticker();
 
         new Settings();
-        new UI(stats, EMITTER);
 
-        const LEVEL_DELAYS = [800, 717, 633, 550, 467, 383, 300, 217, 133, 100, 83, 83, 83, 67, 67, 67, 50, 50, 50, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 17];
 
         EMITTER.subscribe('stats:newLevel', (level) => {
             ticker.start(LEVEL_DELAYS[level]);
@@ -44,34 +43,76 @@ export default class Tetris {
             $store.commit('game/stats/setScore', score)                             //? [VUEX] Обновить уровень (определяет цвет блоков)
             $store.commit('game/stats/setLines', lines)                             //? [VUEX] Обновить уровень (определяет цвет блоков)
         });
-
+        EMITTER.subscribe('stats:tetris', () => {
+            $store.commit('game/tetrisAnimation');                                  //? [VUEX] Анимация тетриса
+        });
         EMITTER.subscribe('block:blockAppeared', () => {
+            console.log('blockAppeared');
             $store.commit('game/stats/countBlock', block.currentBlock.name);        //? [VUEX] Подсчет появившихся блоков
             $store.commit('game/stats/setNextBlock', block.nextBlock.name);         //? [VUEX] Установить след. блок
         });
-        EMITTER.subscribe('block:gameOver', () => ticker.stop());
+        EMITTER.subscribe('block:gameOver', () => {
+            ticker.stop();
+            $store.commit('game/setGameoverState', true);                           //? [VUEX] Установить Gameover
+        });
         EMITTER.subscribe('block:blockFixed', () => ticker.sleep(60));
-
         EMITTER.subscribe('canvas:wipeAnimationStart', () => ticker.sleep(360));
+        EMITTER.subscribe('control:pausePressed', () => {
+            ticker.stop();
+            $store.commit('game/setPauseState', true);                              //? [VUEX] Установить паузу
+        });
+        EMITTER.subscribe('control:pauseReleased', () => {
+            ticker.start();
+            $store.commit('game/setPauseState', false);                             //? [VUEX] Снять паузу
+        });
 
-        EMITTER.subscribe('control:pausePressed', () => ticker.stop());
-        EMITTER.subscribe('control:pauseReleased', () => ticker.start());
+        controls.gamepad.listener.on('gamepad:connected', function (event) {
+            /**
+             * event:
+             *   detail: {
+             *       index: 0, // Gamepad index [0-3]
+             *       gamepad, // Native Gamepad object
+             *   }
+             */
+            console.log(`connected >>`, event.detail.gamepad);
+            $store.commit('gamepads/addGamepad', event.detail.gamepad)              //? [VUEX] Добавить геймпад
+        });
+
+        controls.gamepad.listener.on('gamepad:disconnected', function (event) {
+            /**
+             * event:
+             *   detail: {
+             *       index: 0,
+             *       // Native Gamepad object is no longer available
+             *   }
+             */
+            console.log(`disconnected >>`, event);
+            $store.commit('gamepads/removeGamepad', event.detail.index)             //? [VUEX] Удалить геймпад
+        });
+
+        $store.subscribe((mutation) => {
+            if (mutation.type === "gamepads/updateGamepadIndex") {                  //? [VUEX] Обновить id геймпада
+                if (mutation.payload.playerIndex === this.playerIndex) {
+                    controls.gamepad.gamepadIndex = mutation.payload.gamepadIndex;
+                }
+            }
+        });
+
 
         this.startGame = ({ level }) => {
             // Определить цвет текстур
-            textures.level = level;
+            textures.level = level; //! ТОРМОЗИТ
 
-            stats.init();
-            matrix.clearMatrix();
-            canvas.drawState(matrix.getFixedMatrix());
-
-            block.setNewQueue()
-                .then(() => {
-                    block.currentBlock.drawBlock();
-                    ticker.onTick = () => block.currentBlock.moveDown();
-                    ticker.start(LEVEL_DELAYS[level]);
-                    ticker.sleep(1000).then(() => controls.isAvailable = true)
-                });
+            setTimeout(() => {
+                matrix.clearMatrix();
+                canvas.drawState(matrix.getFixedMatrix());
+                stats.init();
+                block.setNewQueue();
+                block.currentBlock.drawBlock();
+                ticker.onTick = () => block.currentBlock.moveDown();
+                ticker.start(LEVEL_DELAYS[level]);
+                ticker.sleep(1000).then(() => controls.isAvailable = true)
+            }, 100);
         }
 
         this.saveGame = () => {

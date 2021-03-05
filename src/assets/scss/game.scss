@@ -123,8 +123,10 @@
         &_status {
             grid-area: status;
         }
+    }
 
-        &.blink-animation {
+    &.tetris-animation {
+        .panel {
             animation: tetris-animation 0.0142s steps(2, end) infinite;
         }
     }

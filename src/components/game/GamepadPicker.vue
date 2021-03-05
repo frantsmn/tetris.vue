@@ -1,11 +1,12 @@
 <template>
-  <div>
+  <div v-if="gamepadIndex !== undefined">
     Pick gamepad
-    <select v-model="activeGamepad">
+    <select v-model="gamepadIndex">
       <option
-        v-for="gamepad in $store.state.gamepads.gamepads"
+        v-for="gamepad in $store.state.gamepads.list"
         :key="gamepad.index"
         :value="gamepad.index"
+        :selected="gamepadIndex === gamepad.index"
       >
         {{ gamepad.id }}
       </option>
@@ -15,17 +16,21 @@
 
 <script>
 export default {
-  data() {
-    return {
-      activeGamepad: "",
-    };
-  },
-  mounted() {
-    // this.$store.subscribe((mutation, state) => {
-    //   if (mutation.type === "gamepads/addGamepad") {
-    //     console.log("PAYLOAD", mutation.payload);
-    //   }
-    // });
+  props: ["playerIndex"],
+  computed: {
+    gamepadIndex: {
+      get() {
+        if (typeof this.$store.state.gamepads[this.playerIndex] === "number")
+          return this.$store.state.gamepads[this.playerIndex];
+        else return undefined;
+      },
+      set(value) {
+        this.$store.commit("gamepads/updateGamepadIndex", {
+          playerIndex: this.playerIndex,
+          gamepadIndex: value,
+        });
+      },
+    },
   },
 };
 </script>

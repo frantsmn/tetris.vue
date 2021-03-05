@@ -1,13 +1,13 @@
 <template>
-  <div class="game-container" :class="$store.state.session.gamemode">
+  <div class="game-container" :class="this.$store.state.session.gamemode">
     <div ref="game" class="game">
       <StatsPanel />
       <GlassPanel />
       <InfoPanel />
-      <StatusPanel />
+      <StatusPanel :playerIndex="1" />
 
-      <Pause v-if="isPause" />
-      <GameoverOverlay v-if="isGameover" />
+      <PauseOverlay v-if="$store.state.game.isPaused" />
+      <GameoverOverlay v-if="$store.state.game.isGameover" />
     </div>
   </div>
 </template>
@@ -18,8 +18,8 @@ import GlassPanel from "./GlassPanel";
 import InfoPanel from "./InfoPanel";
 import StatusPanel from "./StatusPanel";
 
-import Pause from "./Pause.vue";
-import GameoverOverlay from "./GameoverOverlay.vue";
+import PauseOverlay from "./PauseOverlay";
+import GameoverOverlay from "./GameoverOverlay";
 
 import AssetsLoader from "@/game/assetsLoader";
 import Tetris from "@/game/tetris";
@@ -30,28 +30,27 @@ export default {
     GlassPanel,
     InfoPanel,
     StatusPanel,
-    Pause,
+    PauseOverlay,
     GameoverOverlay,
-  },
-  data() {
-    return {
-      isGameover: false,
-      isPause: false,
-    };
-  },
-  activated() {
-    // console.log("Activated", this.$store.state.session.gamemode);
   },
   async mounted() {
     const loader = new AssetsLoader();
+    await loader.loadAssets();
+
     const game = new Tetris({
+      playerIndex: 1,
       canvasElement: this.$refs.game.querySelector("canvas"),
       $store: this.$store,
     });
-
-    await loader.loadAssets();
     game.startGame({
       level: this.$store.state.game.level,
+    });
+
+    this.$store.subscribe((mutation) => {
+      if (mutation.type === "game/tetrisAnimation") {
+        this.$el.classList.add("tetris-animation");
+        setTimeout(() => this.$el.classList.remove("tetris-animation"), 400);
+      }
     });
   },
 };

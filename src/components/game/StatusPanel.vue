@@ -1,6 +1,6 @@
 <template>
   <div class="panel panel_status">
-    <GamepadPicker />
+    <GamepadPicker :playerIndex="playerIndex" />
   </div>
 </template>
 
@@ -10,5 +10,6 @@ export default {
   components: {
     GamepadPicker,
   },
+  props: ["playerIndex"],
 };
 </script>

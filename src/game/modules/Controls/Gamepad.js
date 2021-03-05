@@ -1,13 +1,7 @@
 import { GamepadListener } from 'gamepad.js';
-
-
-import store from '@/store/index.js'
-
 export default class Gamepad {
+
 	constructor() {
-
-
-
 		this.MAP = {
 			0: { button: 'A' },
 			1: { button: 'B' },
@@ -16,40 +10,11 @@ export default class Gamepad {
 			15: { button: 'Right' },
 			9: { button: 'Pause' },
 		}
-
-		const listener = new GamepadListener(/* options*/);
-		listener.start();
-
-		window.gamepads = this.gamepads = [];
+		this.gamepadIndex = 1;
 		this.pressedKeys = {};
-		this._mode = 'SINGLE';
-
-		listener.on('gamepad:connected', function (event) {
-			/**
-			 * event:
-			 *   detail: {
-			 *       index: 0, // Gamepad index [0-3]
-			 *       gamepad, // Native Gamepad object
-			 *   }
-			 */
-			console.log(`connected >>`, event.detail.gamepad);
-			store.commit('gamepads/addGamepad', event.detail.gamepad)
-		});
-
-		listener.on('gamepad:disconnected', function (event) {
-			/**
-			 * event:
-			 *   detail: {
-			 *       index: 0,
-			 *       // Native Gamepad object is no longer available
-			 *   }
-			 */
-			console.log(`disconnected >>`, event);
-			store.commit('gamepads/removeGamepad', event.detail.index)
-		});
-
-
-		listener.on('gamepad:button', (event) => {
+		this.listener = new GamepadListener(/* options*/);
+		this.listener.start();
+		this.listener.on('gamepad:button', (event) => {
 			/**
 			 * event:
 			 *   detail: {
@@ -61,15 +26,15 @@ export default class Gamepad {
 			 *   }
 			 */
 			// console.log(`button >>>`, event);
-			if (event.detail.pressed) {
-				// console.time('gamepadDelay');
-				this.keydown(event.detail.button);
-			} else {
-				this.keyup(event.detail.button);
+			if (event.detail.index === this.gamepadIndex) {
+				if (event.detail.pressed) {
+					// console.time('gamepadDelay');
+					this.keydown(event.detail.button);
+				} else {
+					this.keyup(event.detail.button);
+				}
 			}
 		});
-
-
 	}
 
 	keydown(button) {

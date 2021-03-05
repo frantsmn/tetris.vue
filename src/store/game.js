@@ -1,10 +1,15 @@
 export default {
     namespaced: true,
     state: {
-        level: 5,
+        level: 0,
+        isPaused: false,
+        isGameover: false,
     },
     mutations: {
-        setLevel(state, level) { state.level = level }
+        setLevel(state, level) { state.level = level },
+        setPauseState(state, isPaused) { state.isPaused = isPaused },
+        setGameoverState(state, isGameover) { state.isGameover = isGameover },
+        tetrisAnimation() { return }
     },
     modules: {
         stats: {

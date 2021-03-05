@@ -10,12 +10,13 @@ export default class Stats {
         //Счетчик высоты падения блоxка
         let fallLinesCounter = 0;
         //Подсчет высоты падения блока с зажатой кнопкой вниз
-        EMITTER.subscribe('control:downPressed', (downPressed) => {
-            fallLinesCounter = downPressed ? fallLinesCounter + 1 : 0;
-        });
+        EMITTER.subscribe('control:downPressed', () => { fallLinesCounter++; });
+        EMITTER.subscribe('control:downReleased', () => { fallLinesCounter = 0; });
+
         //Добавить к очкам высоту падения
         EMITTER.subscribe('block:blockFixed', () => {
             this.score += fallLinesCounter;
+            fallLinesCounter = 0;
             this.refresh();
         });
         //Добавить линии

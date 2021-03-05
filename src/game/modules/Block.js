@@ -15,12 +15,10 @@ export default class Block {
         const goToNextBlock = () => {
             this.currentBlockId++;
             this.currentBlock.drawBlock();
-            this.EMITTER.emit('block:blockAppeared');
         }
 
         function BlockMethods() {
             this.drawBlock = () => {
-                console.log('DRAW BLOCK');
                 matrix.addPoints(this.position.x, this.position.y, this.pointsSet[this.rotation.state - 1], this.color);
                 canvas.drawState(matrix.getMatrix());
             }
@@ -463,24 +461,14 @@ export default class Block {
 
     // Устанавливает новую очередь
     setNewQueue() {
-        return new Promise(resolve => {
-            this.queue = this.createRandomQueue();
-            this.currentBlockId = 0;
-            setTimeout(() => {
-                resolve();
-            }, 10);
-        });
+        this.queue = this.createRandomQueue();
+        this.currentBlockId = 0;
     }
 
     // Загружает очередь и устанавливает позицию в ней
     loadQueue(queue, i) {
-        return new Promise(resolve => {
-            this.queue = queue;
-            this.currentBlockId = i;
-            setTimeout(() => {
-                resolve();
-            }, 10);
-        });
+        this.queue = queue;
+        this.currentBlockId = i;
     }
 
     // Создает массив с рандомными числами 
