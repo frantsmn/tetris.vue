@@ -1,6 +1,4 @@
-'use strict';
-
-class Matrix {
+export default class Matrix {
     constructor(json) {
         this.setEmptyMatrix = function () {
             let m = [];
@@ -24,15 +22,12 @@ class Matrix {
     }
 
     getFixedMatrix() {
-        let m = [];
-        this.matrix.forEach((element, i) => {
-            m[i] = element.map((el) => {
-                if (el) {
-                    return el.state === 'active' ? null : el;
-                }
-                return null;
-            });
-        });
+        let m = [...this.matrix];
+        for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 10; j++) {
+                m[i][j] = this.matrix[i][j]?.state === 'active' ? null : this.matrix[i][j];
+            }
+        }
         return m;
     }
 
@@ -41,16 +36,7 @@ class Matrix {
     }
 
     getFixedMatrixJSON() {
-        let m = [];
-        this.matrix.forEach((element, i) => {
-            m[i] = element.map((el) => {
-                if (el) {
-                    return el.state === 'active' ? null : el;
-                }
-                return null;
-            });
-        });
-        return JSON.stringify(m);
+        return JSON.stringify(this.getFixedMatrix());
     }
 
     setMatrixJSON(json) {
@@ -112,22 +98,19 @@ class Matrix {
 
     getFullLines() {
         let fullLines = [];
-        this.matrix.forEach((line, i) => {
-            if (line.every((point) => {
-                return point && point.state === 'fixed';
-            })) {
-                fullLines.push(i);
-            }
-        });
+        for (let i = 0; i < 20; i++) {
+            if (this.matrix[i].every(point => point?.state === 'fixed'))
+                fullLines.push(i)
+        }
         return fullLines;
     }
 
     removeFullLines() {
-        this.getFullLines().forEach((fullLineNum) => {
-            this.matrix.splice(fullLineNum, 1);
-            this.matrix.unshift([null, null, null, null, null, null, null, null, null, null]);
-        });
+        for (let i = 0; i < 20; i++) {
+            if (this.matrix[i].every(point => point?.state === 'fixed')) {
+                this.matrix.splice(i, 1);
+                this.matrix.unshift([null, null, null, null, null, null, null, null, null, null]);
+            }
+        }
     }
 }
-
-export default Matrix;
