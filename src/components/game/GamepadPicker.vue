@@ -1,14 +1,14 @@
 <template>
-  <div v-if="gamepadIndex !== undefined">
+  <div>
     Pick gamepad
     <select v-model="gamepadIndex">
       <option
-        v-for="gamepad in $store.state.gamepads.list"
+        v-for="gamepad in $store.state.controls.list"
         :key="gamepad.index"
         :value="gamepad.index"
         :selected="gamepadIndex === gamepad.index"
       >
-        {{ gamepad.id }}
+        [{{ gamepad.index }}] {{ gamepad.id }}
       </option>
     </select>
   </div>
@@ -20,12 +20,12 @@ export default {
   computed: {
     gamepadIndex: {
       get() {
-        if (typeof this.$store.state.gamepads[this.playerIndex] === "number")
-          return this.$store.state.gamepads[this.playerIndex];
+        if (typeof this.$store.state.controls[this.playerIndex] === "number")
+          return this.$store.state.controls[this.playerIndex];
         else return undefined;
       },
       set(value) {
-        this.$store.commit("gamepads/updateGamepadIndex", {
+        this.$store.commit("controls/updateGamepadIndex", {
           playerIndex: this.playerIndex,
           gamepadIndex: value,
         });
@@ -34,6 +34,3 @@ export default {
   },
 };
 </script>
-
-<style>
-</style>

@@ -1,9 +1,8 @@
 <template>
-  <div id="nav" style="position: fixed; bottom: 0">
-    <router-link to="/">Start</router-link> | 
-    <router-link to="/game">Game</router-link> | 
-    <router-link to="/about">About</router-link>
-  </div>
+  <!-- <div id="nav" style="position: fixed; bottom: 0">
+    <router-link to="/">Start</router-link> |
+    <router-link to="/game">Game</router-link>
+  </div> -->
   <router-view v-slot="{ Component }">
     <transition name="fade">
       <keep-alive>

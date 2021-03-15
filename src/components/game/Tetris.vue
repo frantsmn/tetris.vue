@@ -1,13 +1,21 @@
 <template>
-  <div class="game-container" :class="this.$store.state.session.gamemode">
-    <div ref="game" class="game">
-      <StatsPanel />
-      <GlassPanel />
-      <InfoPanel />
+  <div class="game-container" :class="this.$store.state.game.mode">
+    <div ref="player1" class="game">
+      <StatsPanel :playerIndex="1" />
+      <GlassPanel :playerIndex="1" />
+      <InfoPanel :playerIndex="1" />
       <StatusPanel :playerIndex="1" />
+    </div>
 
-      <PauseOverlay v-if="$store.state.game.isPaused" />
-      <GameoverOverlay v-if="$store.state.game.isGameover" />
+    <div
+      ref="player2"
+      class="game"
+      v-if="this.$store.state.game.mode !== 'single'"
+    >
+      <StatsPanel :playerIndex="2" />
+      <GlassPanel :playerIndex="2" />
+      <InfoPanel :playerIndex="2" />
+      <StatusPanel :playerIndex="2" />
     </div>
   </div>
 </template>
@@ -18,38 +26,27 @@ import GlassPanel from "./GlassPanel";
 import InfoPanel from "./InfoPanel";
 import StatusPanel from "./StatusPanel";
 
-import PauseOverlay from "./PauseOverlay";
-import GameoverOverlay from "./GameoverOverlay";
-
-import AssetsLoader from "@/game/assetsLoader";
-import Tetris from "@/game/tetris";
-
 export default {
   components: {
     StatsPanel,
     GlassPanel,
     InfoPanel,
     StatusPanel,
-    PauseOverlay,
-    GameoverOverlay,
   },
   async mounted() {
-    const loader = new AssetsLoader();
-    await loader.loadAssets();
-
-    const game = new Tetris({
-      playerIndex: 1,
-      canvasElement: this.$refs.game.querySelector("canvas"),
-      $store: this.$store,
-    });
-    game.startGame({
-      level: this.$store.state.game.level,
+    this.$store.dispatch("game/createGame", {
+      canvasElement1: this.$refs.player1.querySelector("canvas"),
+      canvasElement2: this.$refs.player2?.querySelector("canvas"),
     });
 
+    this.$store.dispatch("game/startNewGame");
+
+    // Tetris animation
     this.$store.subscribe((mutation) => {
       if (mutation.type === "game/tetrisAnimation") {
-        this.$el.classList.add("tetris-animation");
-        setTimeout(() => this.$el.classList.remove("tetris-animation"), 400);
+        const node = this.$refs[`player${mutation.payload.playerIndex}`];
+        node.classList.add("tetris-animation");
+        setTimeout(() => node.classList.remove("tetris-animation"), 400);
       }
     });
   },

@@ -1,29 +1,22 @@
-import Keyboard from './Keyboard.js';
-import Touch from './Touch.js';
-import Gamepad from './Gamepad.js';
-
 export default class Control {
-	constructor(EMITTER, block) {
+	constructor(EMITTER, block, playerIndex, $store) {
 		this.EMITTER = EMITTER;
-		this.gamepad = new Gamepad();
 
 		let shiftRepeatTimeoutID = 0;		// ID таймаута повтора движения блока влево/вправо, при зажатой кнопке
 		let downRepeatTimeoutID = 0;		// ID таймаута повтора движения блока вниз, при зажатой кнопке
 
-		this._isPaused = false;					// Состояние паузы
+		this._isPaused = false;				// Состояние паузы
 		this._isAvailable = false;			// Состояние блокировки управления 
 
 		const downHold = function () {
 			block.currentBlock.moveDown();
 			EMITTER.emit('control:downPressed');								// Сообщить о нажатой клавише 'down' (необходимо для подсчета строк, которые пролетит блок)
 			downRepeatTimeoutID = setTimeout(downHold, 37);			// Рекурсивно вызывать таймаут
-			console.log('DOWN Pressed');
 		}
 
 		const downRelease = function () {
 			EMITTER.emit('control:downReleased');								// Сообщить об отпущенной клавише 'down' (необходимо для подсчета строк, которые пролетел блок)
 			clearTimeout(downRepeatTimeoutID);
-			console.log('DOWN Released');
 		}
 
 		const KEYDOWN_VOC = {
@@ -77,24 +70,12 @@ export default class Control {
 			}
 		}
 
-		// Keyboard
-		const keyboard = new Keyboard();
-		keyboard.onKeyDown = onKeyDown;
-		keyboard.onKeyUp = onKeyUp;
-
-		// Touch
-		const touch = new Touch();
-		touch.onKeyDown = onKeyDown;
-		touch.onKeyUp = onKeyUp;
-
-		// TODO: Gamepad
-		
-		this.gamepad.onKeyDown = onKeyDown;
-		this.gamepad.onKeyUp = onKeyUp;
+		$store.state.controls[playerIndex].onKeyDown = onKeyDown;
+		$store.state.controls[playerIndex].onKeyUp = onKeyUp;
 
 		EMITTER.subscribe('canvas:wipeAnimationStart', () => this.isAvailable = false); 	// Блокировка управления на время анимации
-		EMITTER.subscribe('canvas:wipeAnimationEnd', () => this.isAvailable = true); 			// Восстановление управления после анимации
-		EMITTER.subscribe('block:gameOver', () => this.isAvailable = false); 							// Блокировка управление по gameover
+		EMITTER.subscribe('canvas:wipeAnimationEnd', () => this.isAvailable = true); 		// Восстановление управления после анимации
+		EMITTER.subscribe('block:gameOver', () => this.isAvailable = false); 				// Блокировка управление по gameover
 		EMITTER.subscribe('block:blockFixed', () => requestAnimationFrame(downRelease));	// При фиксации блока программно отжимаем клавишу "вниз"
 	}
 

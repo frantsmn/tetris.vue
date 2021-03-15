@@ -1,19 +1,20 @@
 <template>
-  <div class="overlay">
-    <div class="content">
-      <h2>GAME OVER</h2>
-      <p>
-        Your score:
-        <span>{{ $store.state.game.stats.score }}</span>
-        <br />
-        Enter your name
-      </p>
+  <div class="panel-overlay panel-overlay_gameover">
+    <p class="panel-overlay__title">GAME OVER</p>
+    <p>
+      Your score:
+      <span>{{ $store.state.game[playerIndex].score }}</span>
+    </p>
 
-      <div>
-        <input id="nameInput" type="text" maxlength="8" placeholder="player" />
-      </div>
+    <!-- <p>Enter your name</p>
+    <input class="input" placeholder="noname" />
+    <button class="btn">Save score</button> -->
 
-      <button class="btn">Save score</button>
-    </div>
   </div>
 </template>
+
+<script>
+export default {
+  props: ["playerIndex"],
+};
+</script>

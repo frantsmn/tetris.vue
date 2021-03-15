@@ -2,7 +2,7 @@ export default class Ticker {
 	constructor() {
 		this._isRunning = false;
 		this.sleepTimeout = null;
-		this._startTime = Math.floor(performance.now());
+		this._startTime = performance.now();
 		this._time = 0;
 		this._delay = 1000;
 		this._tickNumber = 0;
@@ -12,13 +12,13 @@ export default class Ticker {
 		const run = () => {
 			requestAnimationFrame(() => {
 
-				this._time = Math.floor(performance.now()) - this._startTime;
-				const requestTickNumber = Math.floor(this._time / this._delay);
+				this._time = performance.now() - this._startTime;
+				const requestTickNumber = ~~(this._time / this._delay);
 
 				if (this._isRunning && requestTickNumber > this._tickNumber) {
 
-					this._tickNumber = Math.floor(this._time / this._delay);
-					this.onTick(this);
+					this._tickNumber = requestTickNumber;
+					this.onTick();
 
 					// console.table({
 					// 	'Ticker time': this._time,
@@ -37,7 +37,7 @@ export default class Ticker {
 
 	set delay(value) {
 		// console.log('Setting delay to:', value);
-		this._startTime = Math.floor(performance.now());
+		this._startTime = performance.now();
 		this._time = 0;
 		this._delay = value;
 		this._tickNumber = 0;

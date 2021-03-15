@@ -1,6 +1,6 @@
 import { createStore, createLogger } from 'vuex'
-import session from './session'
-import gamepads from './gamepads'
+import loader from './loader'
+import controls from './controls'
 import game from './game'
 
 export default createStore({
@@ -11,8 +11,8 @@ export default createStore({
   actions: {
   },
   modules: {
-    session,
-    gamepads,
+    loader,
+    controls,
     game
   },
   plugins: process.env.NODE_ENV !== 'production'

@@ -2,17 +2,23 @@
   <div class="panel panel_stats">
     <p>stats</p>
     <div
-      v-for="(value, key) in $store.state.game.stats.blocks"
-      :key="key"
+      v-for="(value, index) in $store.state.game[playerIndex].blocks"
+      :key="value"
       class="panel__stats-row"
     >
       <img
         :src="`./assets/game/svg/blocks/level_${
-          $store.state.game.level % 10
-        }/${key}.svg`"
+          $store.state.game[playerIndex].level % 10
+        }/${index}.svg`"
         class="panel__block-image"
       />
       <span>{{ value }}</span>
     </div>
   </div>
 </template>
+
+<script>
+export default {
+  props: ["playerIndex"],
+};
+</script>

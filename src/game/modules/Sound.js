@@ -1,11 +1,10 @@
 export default class Sound {
-    constructor(EMITTER) {
+    constructor(EMITTER, $store) {
 
         this.resources = ['land', 'move', 'rotate', 'clearline', 'tetris', 'gameover', 'levelup', 'pause', 'option'];
 
-        for (let i = 0; i < this.resources.length; i++) {
-            this[this.resources[i]] = new Audio();
-            this[this.resources[i]].src = `./assets/game/sound/${this.resources[i]}.mp3`;
+        for (let i = 0; i < $store.state.loader.assets.sounds.length; i++) {
+            this[this.resources[i]] = $store.state.loader.assets.sounds[i];
         }
 
         this.play = (name) => {

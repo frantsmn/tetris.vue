@@ -1,16 +1,11 @@
 <template>
-  <div class="overlay">
-    <div class="content">
-      <h2>PAUSE</h2>
-      <p>Press [space]/(pause) to continiue</p>
-      <button id="SaveGameBtn" class="btn">Save game</button>
-    </div>
+  <div class="panel-overlay">
+    <p class="panel-overlay__title">Pause</p>
   </div>
 </template>
 
 <script>
-export default {};
+export default {
+  props: ["playerIndex"],
+};
 </script>
-
-<style>
-</style>

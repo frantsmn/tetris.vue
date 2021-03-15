@@ -1,7 +1,6 @@
 <template>
   <header class="header">
     <div class="header__left">
-      <router-link to="/" class="btn">Home</router-link>
       <router-link to="/game/new" @click.prevent="toggleOverlay" class="btn"
         >New game</router-link
       >
