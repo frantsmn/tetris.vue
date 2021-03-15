@@ -56,7 +56,7 @@ export default class Matrix {
                 //Точка внутри стакана
             } else if (y + points[i].y <= 19 && x + points[i].x >= 0 && x + points[i].x <= 9) {
                 //Точка не накладывается на закрепленную точку
-                if (this.matrix[y + points[i].y][x + points[i].x] !== null && this.matrix[y + points[i].y][x + points[i].x].state === 'fixed') {
+                if (this.matrix[y + points[i].y][x + points[i].x]?.state === 'fixed') {
                     return false;
                 }
             } else {

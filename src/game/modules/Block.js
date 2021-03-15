@@ -487,6 +487,8 @@ export default class Block {
 
     // Устанавливает текущий блок + (устанавливает следующий блок)
     set currentBlockId(value) {
+        delete this.__currentBlock;
+        delete this.__nextBlock;
         this.__currentBlockId = value;
         this.__currentBlock = this.createBlock[this.queue[value]]();
         this.__nextBlock = this.createBlock[this.queue[value + 1]]();
