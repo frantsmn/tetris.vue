@@ -1,7 +1,11 @@
 export default class AssetsLoader {
     constructor() {
+        this.onLoad = Function;
         this.progress = 0;
         this.__loadedItemsCounter = 0;
+
+        this.sounds = [];
+        this.blockImages = [];
 
         // SOUNDS
         const soundsPath = './assets/game/sound/';
@@ -19,27 +23,8 @@ export default class AssetsLoader {
         this.soundsPaths = soundsNames.map(name => `${soundsPath}${name}`)
 
 
-        // TEXTURES FOR CANVAS
-        const texturesPath = './assets/game/svg/textures/';
-        const texturesPathModifier = 'level_';
-        const texturesPathModifierAmount = 10;
-        const texturesNames = [
-            'type_1.svg',
-            'type_2.svg',
-            'type_3.svg'
-        ];
-        this.texturesPaths = [];
-        for (let index = 0; index < texturesPathModifierAmount; index++) {
-            const indexedPathModifier = `${texturesPathModifier}${index}/`;
-            this.texturesPaths = [
-                ...this.texturesPaths,
-                ...texturesNames.map(name => `${texturesPath}${indexedPathModifier}${name}`)
-            ]
-        }
-
-
         // BLOCK IMAGES FOR STATS
-        const blocksPath = './assets/game/svg/textures/';
+        const blocksPath = './assets/game/svg/blocks/';
         const blocksPathModifier = 'level_';
         const blocksPathModifierAmount = 10;
         const blocksNames = [
@@ -55,19 +40,32 @@ export default class AssetsLoader {
         for (let index = 0; index < blocksPathModifierAmount; index++) {
             const indexedPathModifier = `${blocksPathModifier}${index}/`;
             this.blocksPaths = [
-                ...this.texturesPaths,
+                ...this.blocksPaths,
                 ...blocksNames.map(name => `${blocksPath}${indexedPathModifier}${name}`)
             ]
         }
-
     }
 
-    loadAssets() {
-        return Promise.all([
-            this.__loadSounds(this.soundsPaths),
-            this.__loadImages(this.texturesPaths),
-            this.__loadImages(this.blocksPaths)
-        ]);
+
+
+    async loadAssets() {
+        // Load
+        this.sounds = await this.__loadSounds(this.soundsPaths);
+        this.blockImages = await this.__loadImages(this.blocksPaths);
+
+        // Structurize
+        this.blockImages = this.__structurizeAray(this.blockImages, 7);
+
+        return { sounds: this.sounds, blockImages: this.blockImages }
+    }
+
+    // Приведение массива к виду [[img1, img2, img3], [img1, img2, img3], ...] если параметр amount === 3
+    __structurizeAray(array, amount) {
+        return array.reduce((resArray, current, index) => {
+            if (!resArray[Math.trunc(index / amount)]) resArray.push([]);
+            resArray[Math.trunc(index / amount)].push(current);
+            return resArray;
+        }, []);
     }
 
     __loadSounds(paths) {
@@ -119,11 +117,12 @@ export default class AssetsLoader {
     }
 
     set loadedItemsCounter(value) {
-        const itemsAmout = this.soundsPaths.length + this.texturesPaths.length + this.blocksPaths.length;
+        const itemsAmout = this.soundsPaths.length + this.blocksPaths.length;
         this.progress = 1 / (itemsAmout / value);
         this.__loadedItemsCounter = value;
         //DEBUG
-        console.log('loading...', Math.round(this.progress * 100));
+        // console.log('loading...', Math.round(this.progress * 100));
+        this.onLoad((this.progress * 100).toFixed(0));
     }
 
     get loadedItemsCounter() {
