@@ -37,7 +37,7 @@
 
     &__stats-row {
         display: flex;
-        align-content: flex-start;
+        align-items: center;
         justify-content: space-between;
         margin: 0 5px;
 
@@ -47,13 +47,16 @@
     }
 
     &__block-image {
-        max-width: 48px;
+        // max-width: 48px;
+        max-width: 64px;
         max-height: 32px;
+        min-height: 16px;
+        height: min-content;
 
-        &[src*="i-block"] {
-            max-width: 64px;
-            max-height: 16px;
-        }
+        // &[src*="i-block"] {
+        //     max-width: 64px;
+        //     max-height: 16px;
+        // }
     }
 
     /* #2 Glass */

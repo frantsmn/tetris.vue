@@ -6,12 +6,9 @@
       :key="value"
       class="panel__stats-row"
     >
-      <img
-        :src="`./assets/game/svg/blocks/level_${
-          $store.state.game[playerIndex].level % 10
-        }/${index}.svg`"
-        class="panel__block-image"
-      />
+      <svg class="panel__block-image">
+        <use :xlink:href="`#${index}-svg`"></use>
+      </svg>
       <span>{{ value }}</span>
     </div>
   </div>

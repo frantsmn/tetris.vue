@@ -15,7 +15,6 @@ export default class EventEmitter {
         }
     }
 
-    //Более явный метод исключения функции из EvenEmitter'а
     unsubscribe(eventName, fn) {
         this.events[eventName] = this.events[eventName].filter((eventFn) => fn !== eventFn);
     }
@@ -23,10 +22,14 @@ export default class EventEmitter {
     emit(eventName, data) {
         const event = this.events[eventName]; //Объект искомого события в event
         if (event) { //Если такое свойство (объект) есть
-            event.forEach((fn) => { //Выполняем хранящиеся функции
-                // fn.call(null, data); //Линтер ругался на null
-                fn(data);
-            });
+            for (let i = 0; i < event.length; i++) {
+                const func = event[i];
+                func(data);
+            }
+            // event.forEach((fn) => { //Выполняем хранящиеся функции
+            //     // fn.call(null, data); //Линтер ругался на null
+            //     fn(data);
+            // });
         }
     }
 }

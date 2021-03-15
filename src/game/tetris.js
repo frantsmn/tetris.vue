@@ -1,7 +1,5 @@
 import EventEmitter from './modules/Emitter'
 
-import Sound from './modules/Sound'
-
 import Matrix from './modules/Matrix'
 import Canvas from './modules/Canvas'
 import Block from './modules/Block'
@@ -10,6 +8,7 @@ import Stats from './modules/Stats'
 import Ticker from './modules/Ticker'
 
 import Settings from './modules/Settings'
+import Sound from './modules/Sound'
 
 //=======================================================
 // const matrixState = '[[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null],[null,null,null,{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null,null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},null,{"state":"fixed","color":3},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[null,{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":1},{"state":"fixed","color":1},{"state":"fixed","color":3},null,null,null],[{"state":"fixed","color":2},{"state":"fixed","color":1},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},null],[{"state":"fixed","color":2},{"state":"fixed","color":2},{"state":"fixed","color":2},null,{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3},{"state":"fixed","color":3}]]';
@@ -35,19 +34,23 @@ export default class Tetris {
             this.ticker.start(this.LEVEL_DELAYS[level]);
             $store.commit('game/setLevel', { playerIndex, level })                                   //? [VUEX] Обновить уровень (определяет цвет блоков)
         });
-        this.EMITTER.subscribe('stats:refresh', ({ score, lines }) => {
-            $store.commit('game/setScore', { playerIndex, score })                             //? [VUEX] Обновить уровень (определяет цвет блоков)
-            $store.commit('game/setLines', { playerIndex, lines })                             //? [VUEX] Обновить уровень (определяет цвет блоков)
+        this.EMITTER.subscribe('stats:refresh', ({ level, score, lines }) => {
+            $store.dispatch('game/refreshStats', {
+                playerIndex,
+                level,
+                score,
+                lines
+            })  //? [VUEX] Обновить уровень (определяет цвет блоков)
         });
         this.EMITTER.subscribe('stats:tetris', () => {
             $store.commit('game/tetrisAnimation', { playerIndex });                                  //? [VUEX] Анимация тетриса
         });
         this.EMITTER.subscribe('block:blockAppeared', () => {
-            console.log('blockAppeared');
-            //Вызывает перерисовку
-            $store.commit('game/countBlock', { playerIndex, blockName: this.block.currentBlock.name });        //? [VUEX] Подсчет появившихся блоков
-            //Вызывает перерисовку
-            $store.commit('game/setNextBlock', { playerIndex, blockName: this.block.nextBlock.name });         //? [VUEX] Установить след. блок
+            $store.dispatch('game/refreshBlocksInfo', {
+                playerIndex,
+                currentBlockName: this.block.currentBlock.name,
+                nextBlockName: this.block.nextBlock.name
+            });
         });
         this.EMITTER.subscribe('block:gameOver', () => {
             this.ticker.stop();
@@ -126,7 +129,6 @@ export default class Tetris {
     createQueue = () => this.block.createRandomQueue();
 
     startNewSingleGame = ({ level }) => {
-
         this.block.setNewQueue();
         this.stats.init();
         this.matrix.clearMatrix();

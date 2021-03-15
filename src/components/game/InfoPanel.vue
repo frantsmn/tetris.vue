@@ -11,13 +11,14 @@
     <div>
       <p>next</p>
       <div class="panel__img-wrap">
-        <img
-          v-if="$store.state.game[playerIndex].nextBlock"
+        <svg
           class="panel__block-image"
-          :src="`./assets/game/svg/blocks/level_${
-            $store.state.game[playerIndex].level % 10
-          }/${$store.state.game[playerIndex].nextBlock}.svg`"
-        />
+          v-if="$store.state.game[playerIndex].nextBlock"
+        >
+          <use
+            :xlink:href="`#${$store.state.game[playerIndex].nextBlock}-svg`"
+          ></use>
+        </svg>
       </div>
     </div>
     <div>

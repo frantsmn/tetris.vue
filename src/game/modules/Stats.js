@@ -40,6 +40,8 @@ export default class Stats {
             this.level = Math.floor(this.lines / 10);
             //Оповестить (класс Текстур для смены спрайтов, и класс Sound для воспроизведения звука)
             this.EMITTER.emit('stats:newLevel', this.level);
+            // Отрисовать через vuex на UI свежие данные
+            this.refresh();
             //Если просто очищены линии, то
         } else {
             if (n === 4) {
@@ -72,13 +74,11 @@ export default class Stats {
     }
 
     refresh() {
-        //Рекорд очков
-        // element.querySelector(`#topScoreStat`).textContent = this.topScore;
-
         this.EMITTER.emit('stats:refresh', {
+            level: this.level,
             score: this.score,
             lines: this.lines,
-        })
+        });
     }
 
     //Подгрузка рекордов

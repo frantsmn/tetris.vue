@@ -36,7 +36,9 @@ export default {
   async mounted() {
     this.$store.dispatch("game/createGame", {
       canvasElement1: this.$refs.player1.querySelector("canvas"),
+      wrapperElement1: this.$refs.player1,
       canvasElement2: this.$refs.player2?.querySelector("canvas"),
+      wrapperElement2: this.$refs.player2,
     });
 
     this.$store.dispatch("game/startNewGame");

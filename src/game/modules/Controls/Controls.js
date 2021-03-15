@@ -8,13 +8,13 @@ export default class Control {
 		this._isPaused = false;				// Состояние паузы
 		this._isAvailable = false;			// Состояние блокировки управления 
 
-		const downHold = function () {
+		const downHold = () => {
 			block.currentBlock.moveDown();
 			EMITTER.emit('control:downPressed');								// Сообщить о нажатой клавише 'down' (необходимо для подсчета строк, которые пролетит блок)
 			downRepeatTimeoutID = setTimeout(downHold, 37);			// Рекурсивно вызывать таймаут
 		}
 
-		const downRelease = function () {
+		const downRelease = () => {
 			EMITTER.emit('control:downReleased');								// Сообщить об отпущенной клавише 'down' (необходимо для подсчета строк, которые пролетел блок)
 			clearTimeout(downRepeatTimeoutID);
 		}

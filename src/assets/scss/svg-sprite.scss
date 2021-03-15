@@ -1,0 +1,30 @@
+.game {
+    --primary-tetramino-color: #6e5df3;
+    --secondary-tetramino-color: #77c8ff;
+
+    // 0 level: #6e5df3, #77c8ff
+    // 1 level: #06B72F, #7EEE49
+    // 2 level: #DF2FB7, #FF76FE
+    // 3 level: #6E5DF3, #4EFE77
+    // 4 level: #F33177, #3AFCB6
+    // 5 level: #3AFCB6, #B6A5FF
+    // 6 level: #E44437, #808080
+    // 7 level: #AF3FE4, #CA084E
+    // 8 level: #6E5DF3, #E44437
+    // 9 level: #E44437, #FEAC4E
+}
+
+.hidden-svg-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.primary-tetramino-color {
+    fill: var(--primary-tetramino-color);
+}
+
+.secondary-tetramino-color {
+    fill: var(--secondary-tetramino-color);
+}
