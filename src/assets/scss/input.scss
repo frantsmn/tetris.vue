@@ -1,0 +1,22 @@
+.input {
+    height: 40px;
+    transition: all 0.2s ease;
+    text-align: center;
+    color: var(--color-cyan);
+    border: none;
+    border-top: 1px solid transparent;
+    border-right: 1px solid transparent;
+    border-bottom: solid 1px var(--color-cyan-03);
+    border-left: 1px solid transparent;
+    outline: none;
+    background: transparent;
+    font-family: "Press Start 2P";
+
+    caret-color: var(--color-cyan-03);
+    width: 100%;
+
+    &:focus {
+        border-bottom: solid 1px var(--color-cyan);
+        background: rgba(0, 36, 45, 0.6);
+    }
+}
