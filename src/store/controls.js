@@ -4,23 +4,18 @@ import Keyboard from './controls/Keyboard'
 export default {
     namespaced: true,
     state: {
-
-        list: [{ index: 10, playerIndex: 0, type: 'keyboard', id: 'Keyboard' }],
+        deviceList: [],
+        deviceIndexMap: new Map(),
         1: {
-            deviceIndex: Number,
+            deviceIndex: undefined,
             onKeyDown: () => { },
             onKeyUp: () => { }
         },
         2: {
-            deviceIndex: Number,
+            deviceIndex: undefined,
             onKeyDown: () => { },
             onKeyUp: () => { }
         },
-        map: {
-            10: 1,
-            // 0: 1
-            // 1: 2
-        }
     },
     mutations: {
         init(state) {
@@ -28,50 +23,111 @@ export default {
                 onConnect: (event) => { this.commit('controls/addGamepad', event.detail.gamepad) },
                 onDisconnect: (event) => { this.commit('controls/removeGamepad', event.detail.index) },
 
-                onKeyDown: (KEY, event) => { state[state.map[event.detail.gamepad.index]]?.onKeyDown(KEY) },
-                onKeyUp: (KEY, event) => { state[state.map[event.detail.gamepad.index]]?.onKeyUp(KEY) },
+                onKeyDown: (KEY, event) => { state[state.deviceIndexMap.get(event.detail.gamepad.index)]?.onKeyDown(KEY) },
+                onKeyUp: (KEY, event) => { state[state.deviceIndexMap.get(event.detail.gamepad.index)]?.onKeyUp(KEY) },
             });
 
+
+            // Добавить клавиатуру в список подключенных устройств (контроллеров)
+            const keyboardIndex = +new Date();
+            this.commit('controls/addGamepad', { index: keyboardIndex, id: 'Keyboard' })
             new Keyboard({
-                onKeyDown: (KEY) => { state[state.map[10]].onKeyDown(KEY) },
-                onKeyUp: (KEY) => { state[state.map[10]].onKeyUp(KEY) }
+                onKeyDown: (KEY) => { state[state.deviceIndexMap.get(keyboardIndex)]?.onKeyDown(KEY) },
+                onKeyUp: (KEY) => { state[state.deviceIndexMap.get(keyboardIndex)]?.onKeyUp(KEY) }
             });
         },
 
         addGamepad(state, newGamepad) {
+            // Игнорировать мышь
             if (newGamepad.id.includes('Tyon')) return;
+            // console.info('Gamepad: ', newGamepad);
 
-            // Присвоить index подключенного геймпада игроку, у которого он не выставлен 
-            if (typeof state[1].deviceIndex !== 'number') {
-                this.commit('controls/updateGamepadIndex', { playerIndex: 1, gamepadIndex: newGamepad.index })
-                state.list.push({
-                    index: newGamepad.index,
-                    playerIndex: 1,
-                    type: 'gamepad',
-                    id: newGamepad.id
-                });
-                state.map[newGamepad.index] = 1
-                return
+            // Если этот геймпад еще не добавлен
+            if (state.deviceIndexMap.has(newGamepad.index) === false) {
+                // Добавить геймпад в список устройств
+                state.deviceList.push(newGamepad);
+                // Добавить геймпад в карту устройств 
+                state.deviceIndexMap.set(newGamepad.index, undefined);
+
+                // Проверить для каждого игрока
+                for (let playerIndex = 1; playerIndex <= 2; playerIndex++) {
+                    // console.log('CONNECTED', state.deviceIndexMap.has(newGamepad.index));
+
+                    // Если за игроком не закреплены геймпады
+                    if (state[playerIndex].deviceIndex === undefined) {
+                        // Связать игрока с геймпадом
+                        state[playerIndex].deviceIndex = newGamepad.index;
+                        state.deviceIndexMap.set(newGamepad.index, playerIndex);
+
+                        return;
+                    }
+
+                }
+
+
+                const keyboardIndex = state.deviceList.find(device => device.id === 'Keyboard').index;
+                // Проверить для каждого игрока
+                for (let playerIndex = 1; playerIndex <= 2; playerIndex++) {
+                    // console.log('CONNECTED', state.deviceIndexMap.has(newGamepad.index));
+
+                    // Если за игроком закреплена клавиатура
+                    if (state[playerIndex].deviceIndex === keyboardIndex &&
+                        // и добавляется не эта же клавиатура, (а геймпад)
+                        keyboardIndex !== newGamepad.index
+                    ) {
+                        // Связать игрока с геймпадом
+                        state[playerIndex].deviceIndex = newGamepad.index;
+                        state.deviceIndexMap.set(newGamepad.index, playerIndex);
+                        return;
+                    }
+
+                }
+
+                console.log('AFTER GAMEPAD ADD', state.deviceIndexMap, state.deviceList);
             }
-            if (typeof state[2].deviceIndex !== 'number') {
-                this.commit('controls/updateGamepadIndex', { playerIndex: 2, gamepadIndex: newGamepad.index })
-                state.list.push({
-                    index: newGamepad.index,
-                    playerIndex: 2,
-                    type: 'gamepad',
-                    id: newGamepad.id
-                });
-                state.map[newGamepad.index] = 2
-                return
+
+
+        },
+        removeGamepad(state, gamepadIndex) {
+            const playerIndex = state.deviceIndexMap.get(gamepadIndex)
+            // Если отключено устройство (типа gamepad), которое не было добавлено в список 
+            if (!!playerIndex === false) return;
+            // console.log('GAMEPAD FOR REMOVE >>', gamepadIndex);
+            // console.log('CLEAR PLAYER INDEX >>', playerIndex);
+
+            // Удайлить геймпад из списка устройств
+            state.deviceList = state.deviceList.filter(device => device.index !== gamepadIndex)
+            // Удаление геймпада из карты устройств
+            state.deviceIndexMap.delete(gamepadIndex);
+            // Очистка устройства у игрока
+            state[playerIndex].deviceIndex = undefined;
+
+            //TODO Установка оставшегося контроллера вместо отключенного
+        },
+
+        // Переопределить index геймпадов для игроков 
+        updateGamepadIndex(state, { playerIndex, gamepadIndex: nextDeviceIndex }) {
+            const previousDeviceIndex = state[playerIndex].deviceIndex;
+            const oppositePlayerIndex = playerIndex === 1 ? 2 : 1;
+
+            // Связать выбранный геймпад с игроком
+            state.deviceIndexMap.set(nextDeviceIndex, playerIndex);     // [controls]
+            state[playerIndex].deviceIndex = nextDeviceIndex;           // [vue]
+
+            // Если oppositePlayer остался с таким же девайсом
+            if (state[oppositePlayerIndex].deviceIndex === state[playerIndex].deviceIndex) {
+
+                if (previousDeviceIndex !== undefined) {
+                    // связать его с контроллером от которого отказался игрок
+                    state[oppositePlayerIndex].deviceIndex = previousDeviceIndex;       // [controls]
+                    state.deviceIndexMap.set(previousDeviceIndex, oppositePlayerIndex); // [vue]
+                } else {
+                    // или убрать у него девайс
+                    state[oppositePlayerIndex].deviceIndex = undefined; // [controls]
+                    state.deviceIndexMap.set(previousDeviceIndex, oppositePlayerIndex);       // [vue]
+                }
             }
-        },
-        removeGamepad(state, removedGamepadIndex) {
-            state.list = state.list.filter(device => device.index !== removedGamepadIndex)
-        },
-        // Переопределить index геймпада для игрока 
-        updateGamepadIndex(state, { playerIndex, gamepadIndex }) {
-            state[playerIndex].deviceIndex = gamepadIndex;
-            state.map[gamepadIndex] = playerIndex;
+
         },
     }
 }
