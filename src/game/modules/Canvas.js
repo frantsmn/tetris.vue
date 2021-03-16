@@ -1,39 +1,11 @@
-
-// export default class Textures {
-//     constructor(EMITTER, $store) {
-//         this.$store = $store;
-//         this[1] = {};
-//         this[2] = {};
-//         this[3] = {};
-
-//         this._level = 0;
-//         this.level = 0;
-
-//         EMITTER.subscribe('stats:newLevel', (level) => {
-//             this.level = level % 10; //Нужен только остаток, т.к. текстур 10, а уровней 20
-//         });
-//     }
-
-//     set level(level) {
-//         this._level = level;
-//         this[1] = this.$store.state.loader.assets.textures[level][0];
-//         this[2] = this.$store.state.loader.assets.textures[level][1];
-//         this[3] = this.$store.state.loader.assets.textures[level][2];
-//     }
-
-//     get level() {
-//         return this._level;
-//     }
-// }
-
 export default class Canvas {
+    #level = 0;
     constructor(EMITTER, element) {
         this.context = element.getContext('2d', { alpha: false });
         this.EMITTER = EMITTER;
         this.sprite = document.querySelector('#sprite');
 
         this.cellSize = 20;
-
         this.matrixRowAmount = 20;
         this.matrixColumnAmount = 10;
     }
@@ -44,7 +16,7 @@ export default class Canvas {
                 if (matrix[i][j]) {
                     this.context.drawImage(
                         this.sprite,
-                        0, 0, this.cellSize, this.cellSize,
+                        (matrix[i][j].color - 1) * this.cellSize, this.#level * this.cellSize, this.cellSize, this.cellSize,
                         j * this.cellSize, i * this.cellSize, this.cellSize, this.cellSize
                     );
                 } else {
@@ -130,5 +102,13 @@ export default class Canvas {
             }
             n++;
         }, 200);
+    }
+
+    set level(value) {
+        this.#level = value;
+    }
+
+    get level() {
+        return this.#level = 0;
     }
 }

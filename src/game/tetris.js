@@ -32,6 +32,7 @@ export default class Tetris {
 
         this.EMITTER.subscribe('stats:newLevel', (level) => {
             this.ticker.start(this.LEVEL_DELAYS[level]);
+            this.canvas.level = level;
             $store.commit('game/setLevel', { playerIndex, level })                                   //? [VUEX] Обновить уровень (определяет цвет блоков)
         });
         this.EMITTER.subscribe('stats:refresh', ({ level, score, lines }) => {
